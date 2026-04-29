@@ -6,9 +6,6 @@ const path = require('path');
 const app = express();
 const PORT = 3000;
 
-/* =========================
-    📌 CARREGAMENTO DE DADOS
-========================= */
 let movies = [];
 try {
     const data = fs.readFileSync('data/latest_movies.json', 'utf8');
@@ -23,9 +20,6 @@ movies.forEach(movie => {
     movieMap.set(movie.id.toString(), movie.title);
 });
 
-/* =========================
-    📌 FILA DE ALTA PERFORMANCE
-========================= */
 class FastQueue {
     constructor() {
         this.items = {};
@@ -41,9 +35,6 @@ class FastQueue {
     get length() { return this.tail - this.head; }
 }
 
-/* =========================
-    📌 ESTRUTURA DO GRAFO
-========================= */
 class Graph {
     constructor() {
         this.adjList = new Map();
@@ -68,9 +59,6 @@ const graph = (() => {
     return g;
 })();
 
-/* =========================
-    📌 LÓGICA DE BUSCA
-========================= */
 class GraphSearch {
     static bfsShortestPath(graph, start, goal) {
         if (!graph.has(start) || !graph.has(goal)) return null;
@@ -102,18 +90,46 @@ class GraphSearch {
 
     static bfsAllPaths(graph, start, goal, maxLevel) {
         const results = [];
+        const seen = new Set();
         const queue = new FastQueue();
-        queue.enqueue({ node: start, path: [start] });
+
+       
+        queue.enqueue({ node: start, parent: null, depth: 0 });
+
         while (queue.length > 0) {
-            const { node, path } = queue.dequeue();
-            if (path.length > maxLevel + 1) continue;
+            const entry = queue.dequeue();
+            const { node, depth } = entry;
+
+            if (depth > maxLevel) continue;
+
             if (node === goal) {
-                results.push(path);
+        
+                const path = [];
+                let cur = entry;
+                while (cur !== null) {
+                    path.push(cur.node);
+                    cur = cur.parent;
+                }
+                path.reverse();
+
+                const key = path.join('|');
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    results.push(path);
+                }
                 continue;
             }
+
+            const visited = new Set();
+            let cur = entry;
+            while (cur !== null) {
+                visited.add(cur.node);
+                cur = cur.parent;
+            }
+
             for (const neighbor of graph.getNeighbors(node)) {
-                if (!path.includes(neighbor)) {
-                    queue.enqueue({ node: neighbor, path: [...path, neighbor] });
+                if (!visited.has(neighbor)) {
+                    queue.enqueue({ node: neighbor, parent: entry, depth: depth + 1 });
                 }
             }
         }
@@ -121,9 +137,6 @@ class GraphSearch {
     }
 }
 
-/* =========================
-    📌 ROTAS DA API
-========================= */
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));

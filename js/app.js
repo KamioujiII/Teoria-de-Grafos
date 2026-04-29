@@ -1,6 +1,3 @@
-// =========================
-// 📌 API SERVICE
-// =========================
 class ApiService {
     static baseUrl = 'http://localhost:3000';
 
@@ -19,10 +16,7 @@ class ApiService {
         });
 
         const data = await response.json();
-        if (!response.ok) {
-            // Captura a mensagem "Não há relação entre atores/atrizes" enviada pelo servidor
-            throw new Error(data.message || 'Erro na busca');
-        }
+        if (!response.ok) throw new Error(data.message || 'Erro na busca');
         return data;
     }
 
@@ -34,16 +28,11 @@ class ApiService {
         });
 
         const data = await response.json();
-        if (!response.ok) {
-            throw new Error(data.message || 'Erro na busca');
-        }
+        if (!response.ok) throw new Error(data.message || 'Erro na busca');
         return data;
     }
 }
 
-// =========================
-// 📌 UI SERVICE
-// =========================
 class ActorUI {
     constructor() {
         this.actors = [];
@@ -83,44 +72,74 @@ class ActorUI {
     showShortestPath(data, actor1, actor2) {
         const resultDiv = document.getElementById('busca1-result');
         resultDiv.style.color = "black";
-        resultDiv.textContent = `Busca 1: A distância mais curta entre ${actor1} e ${actor2} é ${data.distance}. Caminho: ${data.path.join(' -> ')}`;
+        resultDiv.textContent =
+            `Busca 1: Distância ${data.distance} | Caminho: ${data.path.join(' → ')}`;
     }
 
     showLevels(data) {
         const resultDiv = document.getElementById('busca2-result');
-        resultDiv.innerHTML = `<h3>Busca 2:</h3>`;
+
+        resultDiv.innerHTML = `
+            <h3>Busca 2</h3>
+            <p><strong id="contador">0</strong> caminhos encontrados</p>
+            <div id="lista"></div>
+        `;
 
         if (!Array.isArray(data)) {
-            resultDiv.innerHTML += `<p>${data.message || 'Erro na busca'}</p>`;
+            resultDiv.innerHTML += `<p>${data.message}</p>`;
             return;
         }
 
-        data.forEach(item => {
-            resultDiv.innerHTML += `
-                <p>
+        const lista = document.getElementById('lista');
+        const contador = document.getElementById('contador');
+
+        let i = 0;
+
+        function renderChunk() {
+            let count = 0;
+
+            while (i < data.length && count < 50) {
+                const item = data[i];
+
+                const p = document.createElement('p');
+                p.innerHTML = `
                     Distância: ${item.distance}<br>
                     Caminho: ${item.path.join(' → ')}
-                </p>
-                <hr>
-            `;
-        });
+                `;
+
+                lista.appendChild(p);
+                lista.appendChild(document.createElement('hr'));
+
+                i++;
+                count++;
+            }
+
+            contador.textContent = i;
+
+            if (i < data.length) {
+                setTimeout(renderChunk, 0);
+            } else {
+                const done = document.createElement('p');
+                done.innerHTML = `<strong>✅ Total: ${data.length}</strong>`;
+                lista.appendChild(done);
+            }
+        }
+
+        renderChunk();
     }
 
-    showErrorMessage(msg, elementId) {
-        const resultDiv = document.getElementById(elementId);
-        resultDiv.style.color = "red";
-        resultDiv.textContent = msg;
+    clearResults() {
+        document.getElementById('busca1-result').textContent = '';
+        document.getElementById('busca2-result').innerHTML = '';
     }
 }
 
-// =========================
-// 📌 INIT & EVENTOS
-// =========================
 const ui = new ActorUI();
 
 ApiService.getActors()
     .then(actors => ui.setActors(actors))
     .catch(err => console.error('Erro ao carregar atores:', err));
+
 
 document.getElementById('select-actors').addEventListener('click', async () => {
     const actor1 = document.getElementById('actor1').value;
@@ -128,11 +147,13 @@ document.getElementById('select-actors').addEventListener('click', async () => {
 
     if (!actor1 || !actor2) return alert('Selecione dois atores.');
 
+    ui.clearResults();
+
     try {
         const data = await ApiService.getShortestPath(actor1, actor2);
         ui.showShortestPath(data, actor1, actor2);
     } catch (err) {
-        ui.showErrorMessage(err.message, 'busca1-result');
+        document.getElementById('busca1-result').textContent = err.message;
     }
 });
 
@@ -142,13 +163,28 @@ document.getElementById('run-busca2').addEventListener('click', async () => {
 
     if (!startActor || !endActor) return alert('Selecione dois atores.');
 
+    ui.clearResults();
+
+    const resultDiv = document.getElementById('busca2-result');
+
+    resultDiv.innerHTML = `
+        <h3>Busca 2</h3>
+        <p>Calculando caminhos...</p>
+    `;
+
     try {
         const data = await ApiService.getLevels(startActor, endActor, 8);
+
+
         ui.showLevels(data);
+
     } catch (err) {
-        document.getElementById('busca2-result').innerHTML = `<p style="color: red;">${err.message}</p>`;
+        resultDiv.innerHTML = `<p style="color:red;">${err.message}</p>`;
     }
 });
 
-document.getElementById('search-actor1').addEventListener('input', (e) => ui.filterActors(e.target.value, 'actor1'));
-document.getElementById('search-actor2').addEventListener('input', (e) => ui.filterActors(e.target.value, 'actor2'));
+document.getElementById('search-actor1')
+    .addEventListener('input', (e) => ui.filterActors(e.target.value, 'actor1'));
+
+document.getElementById('search-actor2')
+    .addEventListener('input', (e) => ui.filterActors(e.target.value, 'actor2'));
