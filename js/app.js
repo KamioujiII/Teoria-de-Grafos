@@ -141,7 +141,7 @@ ApiService.getActors()
     .catch(err => console.error('Erro ao carregar atores:', err));
 
 
-document.getElementById('select-actors').addEventListener('click', async () => {
+document.getElementById('run-both-searches').addEventListener('click', async () => {
     const actor1 = document.getElementById('actor1').value;
     const actor2 = document.getElementById('actor2').value;
 
@@ -150,36 +150,18 @@ document.getElementById('select-actors').addEventListener('click', async () => {
     ui.clearResults();
 
     try {
-        const data = await ApiService.getShortestPath(actor1, actor2);
-        ui.showShortestPath(data, actor1, actor2);
-    } catch (err) {
-        document.getElementById('busca1-result').textContent = err.message;
-    }
-});
+        const shortestData = await ApiService.getShortestPath(actor1, actor2);
+        ui.showShortestPath(shortestData, actor1, actor2);
 
-document.getElementById('run-busca2').addEventListener('click', async () => {
-    const startActor = document.getElementById('actor1').value;
-    const endActor = document.getElementById('actor2').value;
+        const resultDiv = document.getElementById('busca2-result');
+        resultDiv.innerHTML = `\n            <h3>Busca 2</h3>\n            <p>Calculando caminhos...</p>\n        `;
 
-    if (!startActor || !endActor) return alert('Selecione dois atores.');
-
-    ui.clearResults();
-
-    const resultDiv = document.getElementById('busca2-result');
-
-    resultDiv.innerHTML = `
-        <h3>Busca 2</h3>
-        <p>Calculando caminhos...</p>
-    `;
-
-    try {
-        const data = await ApiService.getLevels(startActor, endActor, 8);
-
-
+        const data = await ApiService.getLevels(actor1, actor2, 8);
         ui.showLevels(data);
-
     } catch (err) {
-        resultDiv.innerHTML = `<p style="color:red;">${err.message}</p>`;
+        const message = err.message || 'Erro na busca';
+        ui.showErrorMessage(message, 'busca1-result');
+        ui.showLevelsError(message);
     }
 });
 
