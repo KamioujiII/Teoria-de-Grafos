@@ -132,6 +132,27 @@ class ActorUI {
         document.getElementById('busca1-result').textContent = '';
         document.getElementById('busca2-result').innerHTML = '';
     }
+
+    clearSearch1() {
+        const resultDiv = document.getElementById('busca1-result');
+        resultDiv.textContent = '';
+        resultDiv.style.color = 'black';
+    }
+
+    clearSearch2() {
+        document.getElementById('busca2-result').innerHTML = '';
+    }
+
+    showErrorMessage(message, elementId) {
+        const element = document.getElementById(elementId);
+        element.style.color = 'red';
+        element.textContent = message;
+    }
+
+    showLevelsError(message) {
+        const resultDiv = document.getElementById('busca2-result');
+        resultDiv.innerHTML = `<p style="color: red;">${message}</p>`;
+    }
 }
 
 const ui = new ActorUI();
@@ -140,30 +161,47 @@ ApiService.getActors()
     .then(actors => ui.setActors(actors))
     .catch(err => console.error('Erro ao carregar atores:', err));
 
-
-document.getElementById('run-both-searches').addEventListener('click', async () => {
+async function runBusca1() {
     const actor1 = document.getElementById('actor1').value;
     const actor2 = document.getElementById('actor2').value;
 
     if (!actor1 || !actor2) return alert('Selecione dois atores.');
 
-    ui.clearResults();
+    ui.clearSearch1();
 
     try {
         const shortestData = await ApiService.getShortestPath(actor1, actor2);
         ui.showShortestPath(shortestData, actor1, actor2);
+    } catch (err) {
+        ui.showErrorMessage(err.message || 'Erro na busca', 'busca1-result');
+    }
+}
 
-        const resultDiv = document.getElementById('busca2-result');
-        resultDiv.innerHTML = `\n            <h3>Busca 2</h3>\n            <p>Calculando caminhos...</p>\n        `;
+async function runBusca2() {
+    const actor1 = document.getElementById('actor1').value;
+    const actor2 = document.getElementById('actor2').value;
 
+    if (!actor1 || !actor2) return alert('Selecione dois atores.');
+
+    ui.clearSearch2();
+
+    const resultDiv = document.getElementById('busca2-result');
+    resultDiv.innerHTML = `
+            <h3>Busca 2</h3>
+            <p>Calculando caminhos...</p>
+        `;
+
+    try {
         const data = await ApiService.getLevels(actor1, actor2, 8);
         ui.showLevels(data);
     } catch (err) {
-        const message = err.message || 'Erro na busca';
-        ui.showErrorMessage(message, 'busca1-result');
-        ui.showLevelsError(message);
+        ui.showLevelsError(err.message || 'Erro na busca');
     }
-});
+}
+
+document.getElementById('run-search1').addEventListener('click', runBusca1);
+document.getElementById('run-search2').addEventListener('click', runBusca2);
+
 
 document.getElementById('search-actor1')
     .addEventListener('input', (e) => ui.filterActors(e.target.value, 'actor1'));
