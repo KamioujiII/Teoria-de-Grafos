@@ -4,28 +4,210 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Busca Atores</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #f4f4f0;
+            color: #1a1a1a;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #111;
+        }
+
+        h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        #actors-list {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            max-width: 680px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #555;
+            margin-bottom: 5px;
+            margin-top: 12px;
+        }
+
+        /* ── Dropdown customizado ── */
+        .actor-dropdown {
+            position: relative;
+            margin-bottom: 4px;
+        }
+
+        .dd-input {
+            width: 100%;
+            padding: 9px 36px 9px 12px;
+            border: 1px solid #d0d0d0;
+            border-radius: 7px;
+            font-size: 14px;
+            background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center;
+            color: #1a1a1a;
+            cursor: pointer;
+            transition: border-color 0.15s;
+        }
+
+        .dd-input:focus { outline: none; border-color: #888; }
+        .dd-input.open { border-color: #555; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+
+        .dd-panel {
+            display: none;
+            position: absolute;
+            z-index: 200;
+            background: #fff;
+            border: 1px solid #555;
+            border-top: none;
+            border-bottom-left-radius: 7px;
+            border-bottom-right-radius: 7px;
+            width: 100%;
+            max-height: 260px;
+            overflow: hidden;
+            flex-direction: column;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+        }
+
+        .dd-panel.open { display: flex; }
+
+        .dd-search {
+            padding: 8px;
+            border-bottom: 1px solid #ebebeb;
+            background: #fafafa;
+        }
+
+        .dd-search input {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 13px;
+            background: #fff;
+            color: #1a1a1a;
+        }
+
+        .dd-search input:focus { outline: none; border-color: #888; }
+
+        .dd-list {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .dd-item {
+            padding: 9px 13px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #1a1a1a;
+            transition: background 0.1s;
+        }
+
+        .dd-item:hover  { background: #f0f0ee; }
+        .dd-item.active { background: #ececea; font-weight: 500; }
+
+        .dd-empty {
+            padding: 12px 13px;
+            color: #aaa;
+            font-size: 13px;
+        }
+
+        /* ── Botões ── */
+        #search-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        button {
+            padding: 9px 18px;
+            border: 1px solid #bbb;
+            border-radius: 7px;
+            background: #fff;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        button:hover { background: #f0f0ee; border-color: #888; }
+        button:active { transform: scale(0.98); }
+
+        /* ── Resultados ── */
+        #searches {
+            max-width: 680px;
+        }
+
+        #searches h2 {
+            margin-top: 1.25rem;
+        }
+
+        #busca1-result {
+            font-size: 14px;
+            padding: 10px 0;
+            line-height: 1.6;
+        }
+
+        #busca2-result {
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        #busca2-result h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0.75rem 0 0.5rem;
+        }
+
+        #busca2-result p { margin-bottom: 4px; }
+
+        #busca2-result hr {
+            border: none;
+            border-top: 1px solid #e8e8e4;
+            margin: 6px 0;
+        }
+    </style>
 </head>
 <body>
     <h1>Rede de Conexões: Filmes e Atores</h1>
+
     <div id="actors-list">
         <h2>Atores Ordenados</h2>
-        <input type="text" id="search-actor1" placeholder="Buscar ator...">
-        <select id="actor1" size="10"></select>
-        <input type="text" id="search-actor2" placeholder="Buscar ator...">
-        <select id="actor2" size="10"></select>
-        <div id="search-buttons" style="margin-bottom: 12px;">
-            <button id="run-search1">Buscar busca 1</button>
-            <button id="run-search2">Buscar busca 2</button>
+
+        <label>Ator 1:</label>
+        <div class="actor-dropdown" id="dropdown1"></div>
+
+        <label>Ator 2:</label>
+        <div class="actor-dropdown" id="dropdown2"></div>
+
+        <div id="search-buttons">
+            <button id="run-search1">Buscar caminho mais curto</button>
+            <button id="run-search2">Buscar todos os caminhos</button>
         </div>
     </div>
+
     <div id="searches">
         <h2>Busca 1: Distância Mais Curta Entre Dois Atores</h2>
         <p id="busca1-result"></p>
+
         <h2>Busca 2: Caminhos até 8 níveis entre dois atores</h2>
-        <p id="busca2-count"></p>
         <div id="busca2-result"></div>
     </div>
+
     <script src="js/app.js"></script>
 </body>
 </html>

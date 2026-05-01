@@ -13,6 +13,18 @@ select {
     margin: 10px;
 }
 
+.search-container {
+    margin: 10px 0;
+}
+
+#global-search {
+    width: 100%;
+    padding: 8px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
 button {
     padding: 10px 20px;
     background-color: #007bff;
