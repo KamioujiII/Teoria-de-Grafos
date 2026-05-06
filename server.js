@@ -39,12 +39,25 @@ class Graph {
     constructor() {
         this.adjList = new Map();
     }
+
+    addVertex(node){
+        if (!this.adjList.has(node)){
+            this.adjList.set(node, []);
+        }
+    }
+
     addEdge(a, b) {
-        if (!this.adjList.has(a)) this.adjList.set(a, []);
+        this.addVertex(a);
+        this.addVertex(b);
         this.adjList.get(a).push(b);
     }
-    getNeighbors(node) { return this.adjList.get(node) || []; }
-    has(node) { return this.adjList.has(node); }
+
+    getNeighbors(node) {
+         return this.adjList.get(node) || []; 
+        }
+    has(node) {
+         return this.adjList.has(node); 
+        }
 }
 
 const graph = (() => {
